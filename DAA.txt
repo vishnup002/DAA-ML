@@ -1,0 +1,224 @@
+//Fibonacii
+def fibonacci_iter(n):
+    if n < 0:
+        return -1, 1
+    if n == 0 or n == 1:
+        return n, 1
+    steps = 0
+    a = 0
+    b = 1
+    for i in range(2, n+1):
+        c = a + b
+        a = b
+        b = c
+        steps += 1
+    return c, steps+1
+
+def fibonacci_recur(n):
+    if n < 0:
+        return -1, 1
+    if n == 0 or n == 1:
+        return n, 1
+    fib1, steps1 = fibonacci_recur(n-1)
+    fib2, steps2 = fibonacci_recur(n-2)
+    return fib1 + fib2, steps1 + steps2 + 1
+
+if __name__ == '__main__':
+    n = int(input("Enter a number: "))
+    print("Iterative:", fibonacci_iter(n)[0])
+    print("Steps:", fibonacci_iter(n)[1])
+    print("Recursive:", fibonacci_recur(n)[0])
+    print("Steps:", fibonacci_recur(n)[1])
+
+//huffman
+import heapq
+
+class node:
+    def __init__(self, freq, symbol, left=None, right=None):
+        self.freq = freq
+        self.symbol = symbol
+        self.left = left
+        self.right = right
+        self.huff = ""
+    
+    def __lt__(self, other):
+        return self.freq < other.freq
+    
+def printNodes(node, val=""):
+    newval = val + node.huff
+    if node.left:
+        printNodes(node.left, newval)
+    if node.right:
+        printNodes(node.right, newval)
+    else:
+        print(f"{node.symbol} -> {newval}")
+
+chars = ["a", "b", "c", "d", "e", "f"]
+freqs = [5, 9, 12, 13, 16, 45]
+nodes = []
+
+for i in range(len(chars)):
+    heapq.heappush(nodes, node(freqs[i], chars[i]))
+
+while len(nodes) > 1:
+    left = heapq.heappop(nodes)
+    right = heapq.heappop(nodes)
+    left.huff = "0"
+    right.huff = "1"
+    newnode = node(left.freq + right.freq, left.symbol + right.symbol, left, right)
+    heapq.heappush(nodes, newnode)
+
+printNodes(nodes[0])
+
+//fractional knapsack
+class Item:
+    def __init__(self, profit, weight):
+        self.profit = profit
+        self.weight = weight
+
+def fractionalKnapsack(w, arr):
+    arr.sort(key=lambda x: x.profit/x.weight, reverse=True)
+    finalValue = 0.0
+    for item in arr:
+        if w >= item.weight:
+            finalValue += item.profit
+            w -= item.weight
+        else:
+            finalValue += item.profit * (w/item.weight)
+            break
+    return finalValue
+
+if __name__ == "__main__":
+    n = int(input("Enter number of items-\n"))
+    arr = []
+    for i in range(n):
+        profit = int(input("Enter profit of item " + str(i + 1) + "-\n"))
+        weight = int(input("Enter weight of item " + str(i + 1) + "-\n"))
+        arr.append(Item(profit, weight))
+    w = int(input("Enter capacity of knapsack-\n"))
+    print("Maximum value in knapsack: ", fractionalKnapsack(w, arr))
+
+//0/1 knapsack
+def knapsack_01(n, values, weights, W):
+    dp = [[0] * (W+1) for _ in range(n+1)]
+
+    for i in range(n+1):
+        for w in range(W+1):
+            if i == 0 or w == 0:
+                dp[i][w] = 0
+            elif weights[i-1] <= w:
+                dp[i][w] = max(dp[i-1][w], dp[i-1][w-weights[i-1]] + values[i-1])
+            else:
+                dp[i][w] = dp[i-1][w]
+    
+    selected_items = []
+    i, w = n, W
+    while i > 0 and w > 0:
+        if dp[i][w] != dp[i-1][w]:
+            selected_items.append(i-1)
+            w -= weights[i-1]
+        i -= 1
+    
+    return dp[n][W], selected_items
+
+if __name__ == "__main__":
+    n = 3
+    values = [60, 100, 120]
+    weights = [10, 20, 30]
+    W = 50
+
+    max_value, selected_items = knapsack_01(n, values, weights, W)
+    print("Maximum value:", max_value)
+    print("Selected items:", selected_items)
+
+//n queen backtraking 
+def solveNQueens(n: int, first_queen_col: int):
+    col = set()
+    posDiag = set()
+    negDiag = set()
+
+    res = []
+    board = [["."] * n for _ in range(n)]
+
+    def backtrack(r):
+        if r == n:
+            res.append(["".join(row) for row in board])
+            return
+
+        for c in range(n):
+            if c in col or (r + c) in posDiag or (r - c) in negDiag:
+                continue
+
+            col.add(c)
+            posDiag.add(r + c)
+            negDiag.add(r - c)
+            board[r][c] = "Q"
+
+            backtrack(r + 1)
+
+            col.remove(c)
+            posDiag.remove(r + c)
+            negDiag.remove(r - c)
+            board[r][c] = "."
+
+    col.add(first_queen_col)
+    posDiag.add(0 + first_queen_col)
+    negDiag.add(0 - first_queen_col)
+    board[0][first_queen_col] = "Q"
+
+    backtrack(1)  # Start with the second row
+    return res
+
+if __name__ == "__main__":
+    n = 8
+    first_queen_col = 1
+    board = solveNQueens(n, first_queen_col)[0]
+    for row in board:
+        print(" ".join(row))
+
+//deterministic and randomized knapsack
+import random
+import timeit
+
+def deterministic_partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+
+    for j in range(low, high):
+        if arr[j] < pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1
+
+def randomized_partition(arr, low, high):
+    pivot_index = random.randint(low, high)
+    arr[pivot_index], arr[high] = arr[high], arr[pivot_index]
+    return deterministic_partition(arr, low, high)
+
+def quick_sort(arr, low, high, pivot_selector):
+    if low < high:
+        pivot_index = pivot_selector(arr, low, high)
+        quick_sort(arr, low, pivot_index - 1, pivot_selector)
+        quick_sort(arr, pivot_index + 1, high, pivot_selector)
+
+if __name__ == "__main__":
+    arr_sizes = [100, 1000, 10000, 100000]
+    for size in arr_sizes:
+        arr = [random.randint(1, 1000) for _ in range(size)]
+
+        deterministic_time = timeit.timeit("quick_sort(arr.copy(), 0, len(arr) - 1, deterministic_partition)",
+                                        globals=globals(),
+                                        number=10)
+        
+        randomized_time = timeit.timeit("quick_sort(arr.copy(), 0, len(arr) - 1, randomized_partition)",
+                                        globals=globals(),
+                                        number=10)
+        
+        print(f"Array size: {size}")
+        print(f"Deterministic Quick Sort time: {deterministic_time:.6f} seconds")
+        print(f"Randomized Quick Sort time: {randomized_time:.6f} seconds")
+        print("-" * 40)
+
+//
